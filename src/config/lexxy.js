@@ -18,6 +18,9 @@ const presets = new Configuration({
       upload: "both"
     },
     headings: [ "h2", "h3", "h4" ],
+    tables: {
+      styles: []
+    },
     highlight: {
       buttons: {
         color: [

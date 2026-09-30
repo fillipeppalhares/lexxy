@@ -6,6 +6,7 @@ import TableIcons from "./table_icons"
 import theme from "../../config/theme"
 import { handleRollingTabIndex } from "../../helpers/accessibility_helper"
 import { createElement } from "../../helpers/html_helper"
+import { validatedTableStyles } from "../../helpers/table_style_helper"
 import { nextFrame } from "../../helpers/timing_helper"
 import { ListenerBin, registerEventListener } from "../../helpers/listener_helper"
 
@@ -69,6 +70,11 @@ export class TableTools extends HTMLElement {
 
     this.appendChild(this.#createRowButtonsContainer())
     this.appendChild(this.#createColumnButtonsContainer())
+
+    const tableStyles = this.#tableStyles
+    if (tableStyles.length > 0) {
+      this.appendChild(this.#createTableStyleMenu(tableStyles))
+    }
 
     this.appendChild(this.#createDeleteTableButton())
     this.#listeners.track(registerEventListener(this, "keydown", this.#handleToolsKeydown))
@@ -143,6 +149,65 @@ export class TableTools extends HTMLElement {
     })
 
     return section
+  }
+
+  get #tableStyles() {
+    return validatedTableStyles(this.editorElement.config.get("tables.styles"))
+  }
+
+  #createTableStyleMenu(tableStyles) {
+    const container = createElement("div", { className: "lexxy-table-control lexxy-table-control--style lexxy-floating-controls__group" })
+    const dropdown = createElement("lexxy-toolbar-dropdown", { className: "lexxy-table-control__more-menu" })
+
+    const trigger = createElement("button", {
+      type: "button",
+      className: "lexxy-table-control__more-menu-trigger",
+      dataset: { dropdownTrigger: "" },
+      "aria-haspopup": "menu",
+      "aria-expanded": "false"
+    }, "Style")
+    trigger.tabIndex = -1
+
+    const menu = createElement("div", { className: "lexxy-floating-controls__group lexxy-table-control__more-menu-details" })
+    menu.dataset.dropdownPanel = ""
+    menu.role = "menu"
+    menu.setAttribute("aria-label", "table style options")
+    menu.hidden = true
+
+    const options = [ { name: null, label: "Default" }, ...tableStyles ]
+    options.forEach(({ name, label }) => menu.appendChild(this.#createTableStyleOption(name, label)))
+
+    dropdown.appendChild(trigger)
+    dropdown.appendChild(menu)
+    container.appendChild(dropdown)
+
+    return container
+  }
+
+  #createTableStyleOption(name, label) {
+    const option = createElement("button", {
+      className: "lexxy-table-control__button",
+      type: "button",
+      role: "menuitemradio",
+      "aria-checked": "false",
+      "aria-label": label
+    })
+    option.appendChild(createElement("span")).textContent = label
+    option.tabIndex = -1
+    option.dataset.tableStyle = name ?? ""
+
+    this.#listeners.track(registerEventListener(option, "click", () => this.#setTableStyle(name)))
+
+    return option
+  }
+
+  #setTableStyle(name) {
+    const fromMoreMenu = this.#hasOpenMoreMenu
+
+    this.tableController.setTableStyle(name)
+    this.#update()
+
+    if (fromMoreMenu) this.editor.focus()
   }
 
   #createDeleteTableButton() {
@@ -284,6 +349,7 @@ export class TableTools extends HTMLElement {
     this.#updateButtonsPosition()
     this.style.display = "flex"
     this.#updateRowColumnCount()
+    this.#updateTableStyleMenu()
     this.#closeMoreMenu()
     this.#handleCommandButtonHover()
   }
@@ -296,6 +362,7 @@ export class TableTools extends HTMLElement {
   #update() {
     this.#updateButtonsPosition()
     this.#updateRowColumnCount()
+    this.#updateTableStyleMenu()
     this.#closeMoreMenu()
     this.#handleCommandButtonHover()
   }
@@ -332,6 +399,14 @@ export class TableTools extends HTMLElement {
 
     this.rowCount.textContent = `${rowCount} row${rowCount === 1 ? "" : "s"}`
     this.columnCount.textContent = `${columnCount} column${columnCount === 1 ? "" : "s"}`
+  }
+
+  #updateTableStyleMenu() {
+    const currentStyle = this.tableController.currentTableStyle ?? ""
+
+    this.querySelectorAll("[data-table-style]").forEach(option => {
+      option.setAttribute("aria-checked", String(option.dataset.tableStyle === currentStyle))
+    })
   }
 
   #setTableCellFocus() {

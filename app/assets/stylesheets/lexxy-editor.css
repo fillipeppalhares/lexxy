@@ -918,6 +918,10 @@
               display: inline-block;
             }
 
+            &[aria-checked="true"] {
+              background: var(--lexxy-color-ink-medium);
+            }
+
             svg {
               block-size: 1.3lh;
               inline-size: 1.3lh;

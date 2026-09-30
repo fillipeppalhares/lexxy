@@ -101,6 +101,12 @@ export class TableController {
     }) ?? 0
   }
 
+  get currentTableStyle() {
+    return this.editor.getEditorState().read(() => {
+      return this.currentTableNode?.getTableStyle()
+    }) ?? null
+  }
+
   get tableRows() {
     return this.editor.getEditorState().read(() => {
       return this.currentTableNode?.getChildren()
@@ -139,6 +145,11 @@ export class TableController {
     }
 
     this.#executeCommand(command, customIndex)
+  }
+
+  setTableStyle(name) {
+    this.#selectCellAtSelection()
+    this.editor.dispatchCommand("setTableStyle", name)
   }
 
   #executeCommand(command, customIndex = null) {

@@ -17,6 +17,7 @@ import {
 import { WrappedTableNode } from "../nodes/wrapped_table_node.js"
 import LexxyExtension from "./lexxy_extension.js"
 import { mergeRegister } from "@lexical/utils"
+import { validatedTableStyles } from "../helpers/table_style_helper.js"
 
 export class TablesExtension extends LexxyExtension {
 
@@ -28,7 +29,13 @@ export class TablesExtension extends LexxyExtension {
     return [ "figure", "tbody" ]
   }
 
+  get tableStyles() {
+    return validatedTableStyles(this.editorConfig.get("tables.styles"))
+  }
+
   get lexicalExtension() {
+    const tableStyleNames = this.tableStyles.map(({ name }) => name)
+
     return defineExtension({
       name: "lexxy/tables",
       nodes: [
@@ -63,6 +70,15 @@ export class TablesExtension extends LexxyExtension {
           editor.registerNodeTransform(TableCellNode, (node) => {
             if (node.getBackgroundColor() !== "") {
               node.setBackgroundColor("")
+            }
+          }),
+
+          // Styles arrive from pasted HTML and stored JSON, so only registered names are kept.
+          editor.registerNodeTransform(WrappedTableNode, (node) => {
+            const tableStyle = node.getTableStyle()
+
+            if (tableStyle !== null && !tableStyleNames.includes(tableStyle)) {
+              node.setTableStyle(null)
             }
           }),
 
@@ -121,6 +137,12 @@ export class TablesExtension extends LexxyExtension {
 
           editor.registerCommand("deleteTableColumn", () => {
             $deleteTableColumnAtSelection()
+          }, COMMAND_PRIORITY_NORMAL),
+
+          editor.registerCommand("setTableStyle", (name) => {
+            const selection = $getSelection()
+            if (!$isRangeSelection(selection)) return false
+            $findTableNode(selection.anchor.getNode())?.setTableStyle(name)
           }, COMMAND_PRIORITY_NORMAL),
 
           editor.registerCommand("deleteTable", () => {

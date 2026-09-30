@@ -85,6 +85,21 @@ Editors support the following options, configurable using presets and element at
   <lexxy-editor headings='["h2", "h3"]'></lexxy-editor>
   ```
 
+- `tables.styles`: Register named styles that tables can be switched between from the table tools. Each entry has a `name` (lowercase letters, digits and dashes) and a `label` shown in the menu. A table has at most one style, which is saved in the editor state and in the HTML as a `lexxy-content__table--<name>` class on the `<table>`. Lexxy ships no CSS for your styles: write it in your app. Defaults to no styles, which hides the menu. `selection` is reserved.
+
+  ```js
+  Lexxy.configure({
+    default: { tables: { styles: [ { name: "borderless", label: "No borders" } ] } }
+  })
+  ```
+
+  ```css
+  .lexxy-content__table--borderless th,
+  .lexxy-content__table--borderless td {
+    border-color: transparent;
+  }
+  ```
+
 The toolbar is considered part of the editor for `lexxy:focus` and `lexxy:blur` events. If the toolbar registers event or lexical handlers, it should expose a `dispose()` function which will be called on editor disconnect.
 
 Lexxy also supports standard HTML attributes:

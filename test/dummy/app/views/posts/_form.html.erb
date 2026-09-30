@@ -19,6 +19,13 @@
   </script>
 <% end %>
 
+<% if params[:table_styles] == "true" %>
+  <script type="module">
+    import * as Lexxy from "lexxy"
+    Lexxy.configure({ default: { tables: { styles: [ { name: "borderless", label: "No borders" } ] } } })
+  </script>
+<% end %>
+
 <% if params.key?("add-block-spacing") %>
   <script type="module">
     document.addEventListener("lexxy:insert-markdown", (event) => {
